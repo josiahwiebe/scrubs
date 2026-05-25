@@ -1,9 +1,8 @@
 import { useAction, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Link, useParams } from "@tanstack/react-router";
-import { useUser } from "@clerk/tanstack-react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { VideoPlayer, type VideoPlayerHandle } from "@/components/video-player/VideoPlayer";
+import { VideoPlayer, type TimelineComment, type VideoPlayerHandle } from "@/components/video-player/VideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -14,11 +13,14 @@ import { useVideoPresence } from "@/lib/useVideoPresence";
 import { VideoWatchers } from "@/components/presence/VideoWatchers";
 import { Lock, Video, AlertCircle, MessageSquare, Clock, Download } from "lucide-react";
 import { useShareData } from "./-share.data";
+import { authClient } from "@/lib/auth-client";
 
 export default function SharePage() {
   const params = useParams({ strict: false });
   const token = params.token as string;
-  const { user, isLoaded: isUserLoaded } = useUser();
+  const { data: session, isPending: isUserPending } = authClient.useSession();
+  const user = session?.user ?? null;
+  const isUserLoaded = !isUserPending;
 
   const issueAccessGrant = useMutation(api.shareLinks.issueAccessGrant);
   const createComment = useMutation(api.comments.createForShareGrant);
@@ -126,25 +128,37 @@ export default function SharePage() {
   }, [getPlaybackSession, grantToken]);
 
   const flattenedComments = useMemo(() => {
-    if (!comments) return [] as Array<{ _id: string; timestampSeconds: number; resolved: boolean }>;
+    if (!comments) return [] as TimelineComment[];
 
-    const markers: Array<{ _id: string; timestampSeconds: number; resolved: boolean }> = [];
+    const markers: TimelineComment[] = [];
     for (const comment of comments) {
       markers.push({
         _id: comment._id,
         timestampSeconds: comment.timestampSeconds,
         resolved: comment.resolved,
+        text: comment.text,
+        userName: comment.userName,
+        userAvatarUrl: comment.userAvatarUrl,
+        _creationTime: comment._creationTime,
       });
       for (const reply of comment.replies) {
         markers.push({
           _id: reply._id,
           timestampSeconds: reply.timestampSeconds,
           resolved: reply.resolved,
+          text: reply.text,
+          userName: reply.userName,
+          userAvatarUrl: reply.userAvatarUrl,
+          _creationTime: reply._creationTime,
         });
       }
     }
     return markers;
   }, [comments]);
+
+  const pausePlaybackForComment = useCallback(() => {
+    playerRef.current?.pause();
+  }, []);
 
   const handleSubmitComment = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -216,7 +230,7 @@ export default function SharePage() {
           <CardContent>
             <Link to="/" preload="intent" className="block">
               <Button variant="outline" className="w-full">
-                Go to scrubs
+                Go to scrubs.
               </Button>
             </Link>
           </CardContent>
@@ -295,7 +309,7 @@ export default function SharePage() {
             to="/"
             className="text-[#888] hover:text-[#1a1a1a] text-sm flex items-center gap-2 font-bold"
           >
-            scrubs
+            scrubs.
           </Link>
           <Button
             variant="outline"
@@ -375,7 +389,11 @@ export default function SharePage() {
               </div>
               <Textarea
                 value={commentText}
-                onChange={(event) => setCommentText(event.target.value)}
+                onChange={(event) => {
+                  pausePlaybackForComment();
+                  setCommentText(event.target.value);
+                }}
+                onFocus={pausePlaybackForComment}
                 placeholder="Leave a comment..."
                 className="min-h-[90px]"
               />
@@ -448,7 +466,7 @@ export default function SharePage() {
         <div className="max-w-6xl mx-auto text-center text-sm text-[#888]">
           Shared via{" "}
           <Link to="/" preload="intent" className="text-[#1a1a1a] hover:text-[#2d5a2d] font-bold">
-            scrubs
+            scrubs.
           </Link>
         </div>
       </footer>

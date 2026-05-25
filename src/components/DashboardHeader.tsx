@@ -1,11 +1,20 @@
 import { Link } from "@tanstack/react-router";
-import { UserButton } from "@clerk/tanstack-react-start";
-import { Moon, Sun } from "lucide-react";
+import { LogOut, Moon, Sun, User } from "lucide-react";
 import { useTheme } from "@/components/theme/ThemeToggle";
 import React from "react";
 import { useConvex } from "convex/react";
 import { useRoutePrewarmIntent } from "@/lib/useRoutePrewarmIntent";
 import { prewarmDashboardIndex } from "../../app/routes/dashboard/-index.data";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { authClient } from "@/lib/auth-client";
 
 function ThemeToggleButton() {
   const { theme, toggleTheme, mounted } = useTheme();
@@ -25,6 +34,80 @@ function ThemeToggleButton() {
         <Moon className="h-4 w-4" />
       )}
     </button>
+  );
+}
+
+function getUserInitials(name: string | null | undefined, email: string | null | undefined) {
+  const source = name || email || "User";
+  return source
+    .split(/\s+/)
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((part) => part[0]?.toUpperCase())
+    .join("") || "U";
+}
+
+/** Renders the Better Auth account menu used in the dashboard header. */
+function UserMenuButton() {
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user;
+
+  if (isPending) {
+    return <div className="h-8 w-8 border-2 border-[#1a1a1a] bg-[#e8e8e0]" />;
+  }
+
+  if (!user) {
+    return null;
+  }
+
+  const label = user.name || user.email || "Account";
+
+  const handleSignOut = async () => {
+    await authClient.signOut({
+      fetchOptions: {
+        onSuccess: () => {
+          window.location.replace("/sign-in");
+        },
+      },
+    });
+  };
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <button
+          type="button"
+          className="h-8 w-8 border-2 border-[#1a1a1a] bg-[#e8e8e0] text-[#1a1a1a] outline-none focus-visible:ring-2 focus-visible:ring-[#2d5a2d]"
+          aria-label="Open account menu"
+        >
+          <Avatar className="h-full w-full rounded-none ring-0">
+            {user.image ? <AvatarImage src={user.image} alt={label} /> : null}
+            <AvatarFallback className="rounded-none text-xs">
+              {getUserInitials(user.name, user.email)}
+            </AvatarFallback>
+          </Avatar>
+        </button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="normal-case tracking-normal">
+          <span className="block truncate text-sm text-[#1a1a1a]">{label}</span>
+          {user.email ? (
+            <span className="block truncate text-xs font-normal normal-case text-[#888]">
+              {user.email}
+            </span>
+          ) : null}
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem disabled>
+          <User className="mr-2 h-4 w-4" />
+          Account
+        </DropdownMenuItem>
+        <DropdownMenuItem onSelect={() => void handleSignOut()}>
+          <LogOut className="mr-2 h-4 w-4" />
+          Sign out
+        </DropdownMenuItem>
+      </DropdownMenuContent>
+    </DropdownMenu>
   );
 }
 
@@ -85,23 +168,7 @@ export function DashboardHeader({
       {/* User controls — pinned top-right */}
       <div className="row-start-1 col-start-2 sm:col-start-3 flex items-center gap-4 pl-4 border-l-2 border-[#1a1a1a]/10 h-8">
         <ThemeToggleButton />
-        <UserButton
-          appearance={{
-            variables: {
-              colorText: "#1a1a1a",
-              colorTextSecondary: "#888",
-              colorBackground: "#f0f0e8",
-            },
-            elements: {
-              avatarBox: "w-8 h-8 rounded-none border-2 border-[#1a1a1a]",
-              userButtonPopoverCard: "bg-[#f0f0e8] border-2 border-[#1a1a1a] rounded-none shadow-[8px_8px_0px_0px_var(--shadow-color)]",
-              userButtonPopoverActionButton: "!text-[#1a1a1a] hover:!bg-[#e8e8e0] rounded-none",
-              userButtonPopoverActionButtonText: "!text-[#1a1a1a] hover:!text-[#1a1a1a] font-mono font-bold",
-              userButtonPopoverActionButtonIcon: "!text-[#1a1a1a] hover:!text-[#1a1a1a]",
-              userButtonPopoverFooter: "hidden",
-            },
-          }}
-        />
+        <UserMenuButton />
       </div>
 
       {/* Children — second row on mobile, middle column on desktop */}

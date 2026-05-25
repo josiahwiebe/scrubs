@@ -3,8 +3,11 @@ import { httpRouter } from "convex/server";
 import { httpAction } from "./_generated/server";
 import type Stripe from "stripe";
 import { components, internal } from "./_generated/api";
+import { authComponent, createAuth } from "./auth";
 
 const http = httpRouter();
+
+authComponent.registerRoutes(http, createAuth);
 
 function getSubscriptionPriceId(subscription: Stripe.Subscription): string | undefined {
   return subscription.items.data[0]?.price?.id;

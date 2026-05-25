@@ -18,7 +18,16 @@ export type VideoWatcher = {
 };
 
 function createClientId() {
-  return crypto.randomUUID().replace(/-/g, "");
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID().replace(/-/g, "");
+  }
+
+  const randomBytes =
+    typeof crypto !== "undefined" && typeof crypto.getRandomValues === "function"
+      ? Array.from(crypto.getRandomValues(new Uint8Array(16)))
+      : Array.from({ length: 16 }, () => Math.floor(Math.random() * 256));
+
+  return randomBytes.map((byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
 function getOrCreateClientId() {
@@ -65,7 +74,7 @@ export function useVideoPresence(input: {
     }
 
     let active = true;
-    const sessionId = crypto.randomUUID();
+    const sessionId = createClientId();
 
     const runHeartbeat = async () => {
       const result = await heartbeat({

@@ -17,7 +17,12 @@ import {
 } from "./billingHelpers";
 
 const stripeClient = new StripeSubscriptions(components.stripe, {});
-const stripe = new Stripe(stripeClient.apiKey);
+let cachedStripe: Stripe | null = null;
+
+function getStripe() {
+  cachedStripe ??= new Stripe(stripeClient.apiKey);
+  return cachedStripe;
+}
 const TEAM_TRIAL_DAYS = 7;
 const PLAN_RANK = {
   basic: 0,
@@ -121,7 +126,7 @@ export const createSubscriptionCheckout = action({
       sessionParams.customer = stripeCustomerId;
     }
 
-    const session = await stripe.checkout.sessions.create(sessionParams);
+    const session = await getStripe().checkout.sessions.create(sessionParams);
     return {
       sessionId: session.id,
       url: session.url,
@@ -203,7 +208,7 @@ export const updateTeamSubscriptionPlan = action({
     }
 
     const stripePriceId = getStripePriceIdForPlan(args.plan);
-    const subscription = await stripe.subscriptions.retrieve(stripeSubscriptionId);
+    const subscription = await getStripe().subscriptions.retrieve(stripeSubscriptionId);
 
     if (!hasActiveTeamSubscriptionStatus(subscription.status)) {
       throw new Error("Only active subscriptions can be upgraded.");
@@ -228,7 +233,7 @@ export const updateTeamSubscriptionPlan = action({
       throw new Error("Use the billing portal to downgrade this subscription.");
     }
 
-    const updatedSubscription = await stripe.subscriptions.update(
+    const updatedSubscription = await getStripe().subscriptions.update(
       stripeSubscriptionId,
       {
         items: [
@@ -303,15 +308,22 @@ export const getTeamBilling = query({
     const subscriptionState = await getTeamSubscriptionState(ctx, args.teamId);
     const storageUsedBytes = await getTeamStorageUsedBytes(ctx, args.teamId);
     const subscription = subscriptionState.subscription;
+    const isPersonalUnlimited = subscriptionState.isPersonalUnlimited;
 
     return {
       plan: subscriptionState.plan,
-      monthlyPriceUsd: TEAM_PLAN_MONTHLY_PRICE_USD[subscriptionState.plan],
-      storageLimitBytes: TEAM_PLAN_STORAGE_LIMIT_BYTES[subscriptionState.plan],
+      monthlyPriceUsd: isPersonalUnlimited
+        ? 0
+        : TEAM_PLAN_MONTHLY_PRICE_USD[subscriptionState.plan],
+      storageLimitBytes: isPersonalUnlimited
+        ? Number.MAX_SAFE_INTEGER
+        : TEAM_PLAN_STORAGE_LIMIT_BYTES[subscriptionState.plan],
       storageUsedBytes,
       hasActiveSubscription: subscriptionState.hasActiveSubscription,
       subscriptionStatus:
-        subscription?.status ?? subscriptionState.team.billingStatus ?? null,
+        (isPersonalUnlimited
+          ? "personal_unlimited"
+          : subscription?.status ?? subscriptionState.team.billingStatus) ?? null,
       stripeCustomerId:
         subscriptionState.team.stripeCustomerId ??
         subscription?.stripeCustomerId ??

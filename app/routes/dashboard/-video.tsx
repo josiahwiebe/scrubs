@@ -183,6 +183,10 @@ export default function VideoPage() {
     setTimeout(() => setHighlightedCommentId(undefined), 3000);
   }, []);
 
+  const pausePlaybackForComment = useCallback(() => {
+    playerRef.current?.pause();
+  }, []);
+
   const requestDownload = useCallback(async () => {
     if (!video || video.status !== "ready" || !resolvedVideoId) return null;
     try {
@@ -473,6 +477,7 @@ export default function VideoPage() {
               onTimestampClick={handleTimestampClick}
               highlightedCommentId={highlightedCommentId}
               canResolve={canEdit}
+              onStartTyping={pausePlaybackForComment}
             />
           </div>
           {canComment && (
@@ -482,6 +487,7 @@ export default function VideoPage() {
                 timestampSeconds={currentTime}
                 showTimestamp
                 variant="seamless"
+                onStartTyping={pausePlaybackForComment}
               />
             </div>
           )}
@@ -519,6 +525,7 @@ export default function VideoPage() {
               }}
               highlightedCommentId={highlightedCommentId}
               canResolve={canEdit}
+              onStartTyping={pausePlaybackForComment}
             />
           </div>
           {canComment && (
@@ -528,6 +535,7 @@ export default function VideoPage() {
                 timestampSeconds={currentTime}
                 showTimestamp
                 variant="seamless"
+                onStartTyping={pausePlaybackForComment}
               />
             </div>
           )}

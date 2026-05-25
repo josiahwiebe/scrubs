@@ -15,6 +15,7 @@ interface CommentListProps {
   onTimestampClick: (seconds: number) => void;
   highlightedCommentId?: Id<"comments">;
   canResolve?: boolean;
+  onStartTyping?: () => void;
 }
 
 export function CommentList({
@@ -23,6 +24,7 @@ export function CommentList({
   onTimestampClick,
   highlightedCommentId,
   canResolve = false,
+  onStartTyping,
 }: CommentListProps) {
   const queriedComments = useQuery(api.comments.getThreaded, { videoId });
   const comments = providedComments ?? queriedComments;
@@ -54,6 +56,7 @@ export function CommentList({
               onTimestampClick={onTimestampClick}
               isHighlighted={highlightedCommentId === comment._id}
               canResolve={canResolve}
+              onStartTyping={onStartTyping}
             />
             {comment.replies.length > 0 && (
               <div className="pl-14 pr-4 pb-4 space-y-4 relative">
@@ -66,6 +69,7 @@ export function CommentList({
                     isHighlighted={highlightedCommentId === reply._id}
                     isReply
                     canResolve={canResolve}
+                    onStartTyping={onStartTyping}
                   />
                 ))}
               </div>

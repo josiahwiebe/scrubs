@@ -19,12 +19,9 @@ import {
 } from "lucide-react";
 import { cn, formatDuration, formatTimestamp } from "@/lib/utils";
 import { triggerDownload } from "@/lib/download";
+import { CommentTimelineMarker, type TimelineComment } from "./CommentTimelineMarker";
 
-interface Comment {
-  _id: string;
-  timestampSeconds: number;
-  resolved: boolean;
-}
+export type { TimelineComment } from "./CommentTimelineMarker";
 
 interface DownloadResult {
   url: string;
@@ -34,9 +31,9 @@ interface DownloadResult {
 interface VideoPlayerProps {
   src: string;
   poster?: string;
-  comments?: Comment[];
+  comments?: TimelineComment[];
   onTimeUpdate?: (currentTime: number) => void;
-  onMarkerClick?: (comment: Comment) => void;
+  onMarkerClick?: (comment: TimelineComment) => void;
   initialTime?: number;
   className?: string;
   allowDownload?: boolean;
@@ -56,10 +53,12 @@ interface VideoPlayerProps {
 
 export interface VideoPlayerHandle {
   seekTo: (time: number, options?: { play?: boolean }) => void;
+  pause: () => void;
 }
 
 const PLAYBACK_RATES = [0.5, 0.75, 1, 1.25, 1.5, 2] as const;
 const AUTO_QUALITY_LEVEL = -1 as const;
+const COMMENT_PREVIEW_WINDOW_SECONDS = 0.5;
 
 type QualityLevelOption = {
   level: number;
@@ -129,11 +128,11 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(funct
   const resumeTimeOnSourceChangeRef = useRef<number | null>(null);
 
   const groupedMarkers = useMemo(() => {
-    if (!duration || comments.length === 0) return [] as { position: number; comment: Comment }[];
+    if (!duration || comments.length === 0) return [] as { position: number; comment: TimelineComment }[];
 
-    const markers: { position: number; comment: Comment }[] = [];
+    const markers: { position: number; comment: TimelineComment }[] = [];
     for (const comment of comments) {
-      const position = (comment.timestampSeconds / duration) * 100;
+      const position = clamp((comment.timestampSeconds / duration) * 100, 0, 100);
       const existing = markers.find((m) => Math.abs(m.position - position) < 1);
       if (!existing) {
         markers.push({ position, comment });
@@ -194,7 +193,14 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(funct
     [applyTime, showControls]
   );
 
-  useImperativeHandle(ref, () => ({ seekTo }), [seekTo]);
+  const pause = useCallback(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    video.pause();
+    showControls();
+  }, [showControls]);
+
+  useImperativeHandle(ref, () => ({ seekTo, pause }), [pause, seekTo]);
 
   const handleSeekBy = useCallback(
     (delta: number) => {
@@ -686,6 +692,9 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(funct
 
   const displayTime = isScrubbing ? scrubTime : currentTime;
   const playedPercent = duration > 0 ? clamp(displayTime / duration, 0, 1) : 0;
+  const activePreviewCommentId = groupedMarkers.find(
+    (marker) => Math.abs(displayTime - marker.comment.timestampSeconds) <= COMMENT_PREVIEW_WINDOW_SECONDS,
+  )?.comment._id;
   const canDownload = allowDownload && (Boolean(downloadUrl) || Boolean(onRequestDownload));
   const isHls = isHlsSource(src);
   const hasExternalQualityOptions = Boolean(qualityOptionsConfig && qualityOptionsConfig.length > 0);
@@ -699,6 +708,11 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(funct
   }, [hasExternalQualityOptions, isHls, qualityOptions, qualityOptionsConfig, selectedQualityId, selectedQualityLevel]);
   const hasManualQualityOptions = isHls && qualityOptions.length > 0;
   const isExternalControls = controlsBelow && !isFullscreen;
+
+  useEffect(() => {
+    if (!activePreviewCommentId) return;
+    showControls();
+  }, [activePreviewCommentId, showControls]);
 
   // ── Controls content (timeline + buttons) ─────────────────────────
   // Rendered either as an overlay inside the video frame or below it.
@@ -725,27 +739,18 @@ export const VideoPlayer = forwardRef<VideoPlayerHandle, VideoPlayerProps>(funct
 
         {/* Comment markers */}
         {groupedMarkers.map((marker) => {
-          const isResolved = marker.comment.resolved;
-          const isActive = Math.abs(displayTime - marker.comment.timestampSeconds) < 1.5;
+          const isActive = activePreviewCommentId === marker.comment._id;
           return (
-            <button
+            <CommentTimelineMarker
               key={marker.comment._id}
-              type="button"
-              className={cn(
-                "absolute top-1/2 z-10 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full border border-black/40 shadow",
-                isResolved ? "bg-green-400" : "bg-orange-400",
-                isActive && "ring-2 ring-white/60"
-              )}
-              style={{ left: `${marker.position}%` }}
-              onPointerDown={(e) => { e.stopPropagation(); }}
-              onClick={(e) => {
-                e.stopPropagation();
-                applyTime(marker.comment.timestampSeconds);
-                onMarkerClick?.(marker.comment);
+              comment={marker.comment}
+              isActive={isActive}
+              position={marker.position}
+              onSelect={(comment) => {
+                applyTime(comment.timestampSeconds);
+                onMarkerClick?.(comment);
                 showControls();
               }}
-              aria-label={`Jump to comment at ${formatTimestamp(marker.comment.timestampSeconds)}`}
-              title={`Comment at ${formatTimestamp(marker.comment.timestampSeconds)}`}
             />
           );
         })}

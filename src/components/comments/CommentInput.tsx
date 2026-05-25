@@ -14,6 +14,7 @@ interface CommentInputProps {
   parentId?: Id<"comments">;
   onSubmit?: () => void;
   onCancel?: () => void;
+  onStartTyping?: () => void;
   autoFocus?: boolean;
   placeholder?: string;
   showTimestamp?: boolean;
@@ -26,6 +27,7 @@ export function CommentInput({
   parentId,
   onSubmit,
   onCancel,
+  onStartTyping,
   autoFocus = false,
   placeholder,
   showTimestamp = false,
@@ -89,6 +91,11 @@ export function CommentInput({
     }
   };
 
+  const handleChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    onStartTyping?.();
+    setText(e.target.value);
+  };
+
   return (
     <form 
       onSubmit={handleSubmit} 
@@ -101,7 +108,8 @@ export function CommentInput({
       <textarea
         ref={textareaRef}
         value={text}
-        onChange={(e) => setText(e.target.value)}
+        onChange={handleChange}
+        onFocus={onStartTyping}
         onKeyDown={handleKeyDown}
         placeholder={finalPlaceholder}
         autoFocus={autoFocus}

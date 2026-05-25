@@ -3,19 +3,21 @@ import { useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Link, useNavigate, useParams } from "@tanstack/react-router";
 import { useState } from "react";
-import { useUser } from "@clerk/tanstack-react-start";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { AlertCircle, Users, Mail, Check } from "lucide-react";
 import { teamHomePath } from "@/lib/routes";
 import { useInviteData } from "./-invite.data";
+import { authClient } from "@/lib/auth-client";
 
 export default function InvitePage() {
   const params = useParams({ strict: false });
   const navigate = useNavigate({});
   const token = params.token as string;
-  const { user, isLoaded } = useUser();
+  const { data: session, isPending } = authClient.useSession();
+  const user = session?.user ?? null;
+  const isLoaded = !isPending;
 
   const { invite } = useInviteData({ token });
   const acceptInvite = useMutation(api.teams.acceptInvite);
@@ -62,7 +64,7 @@ export default function InvitePage() {
           <CardContent>
             <Link to="/" preload="intent" className="block">
               <Button variant="outline" className="w-full">
-                Go to scrubs
+                Go to scrubs.
               </Button>
             </Link>
           </CardContent>
@@ -106,7 +108,7 @@ export default function InvitePage() {
   }
 
   // User signed in but with different email
-  if (user.primaryEmailAddress?.emailAddress !== invite.email) {
+  if (user.email !== invite.email) {
     return (
       <div className="min-h-screen bg-[#f0f0e8] flex items-center justify-center p-4">
         <Card className="max-w-md w-full">
@@ -117,7 +119,7 @@ export default function InvitePage() {
             <CardTitle>Different email address</CardTitle>
             <CardDescription>
               This invite was sent to {invite.email}, but you&apos;re signed in as{" "}
-              {user.primaryEmailAddress?.emailAddress}.
+              {user.email}.
             </CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">

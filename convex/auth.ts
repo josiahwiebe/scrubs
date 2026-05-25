@@ -1,20 +1,64 @@
-import { QueryCtx, MutationCtx, ActionCtx } from "./_generated/server";
-import { Id } from "./_generated/dataModel";
+import { betterAuth } from "better-auth/minimal";
+import { createClient, type GenericCtx } from "@convex-dev/better-auth";
+import { convex } from "@convex-dev/better-auth/plugins";
+import { components } from "./_generated/api";
+import { query, type QueryCtx, type MutationCtx, type ActionCtx } from "./_generated/server";
+import { type DataModel, type Id } from "./_generated/dataModel";
+import authConfig from "./auth.config";
 
-type ClerkIdentity = NonNullable<
+type AuthIdentity = NonNullable<
   Awaited<ReturnType<QueryCtx["auth"]["getUserIdentity"]>>
 >;
+
+const siteUrl = process.env.SITE_URL!;
+const trustedOrigins = [
+  siteUrl,
+  "http://100.93.227.9:5297",
+];
+
+export const authComponent = createClient<DataModel>(components.betterAuth);
+
+export const createAuth = (ctx: GenericCtx<DataModel>) =>
+  betterAuth({
+    baseURL: siteUrl,
+    database: authComponent.adapter(ctx),
+    trustedOrigins,
+    emailAndPassword: {
+      enabled: true,
+      requireEmailVerification: false,
+    },
+    plugins: [
+      convex({
+        authConfig,
+        jwt: {
+          definePayload: ({ user }) => ({
+            email: user.email,
+            emailVerified: user.emailVerified,
+            name: user.name,
+            pictureUrl: user.image,
+          }),
+        },
+      }),
+    ],
+  });
 
 function hasString(value: unknown): value is string {
   return typeof value === "string" && value.length > 0;
 }
 
-function getOptionalString(identity: ClerkIdentity, key: string): string | undefined {
+function getOptionalString(identity: AuthIdentity, key: string): string | undefined {
   const value = (identity as Record<string, unknown>)[key];
   return hasString(value) ? value : undefined;
 }
 
-export function identityName(identity: ClerkIdentity): string {
+export const getCurrentUser = query({
+  args: {},
+  handler: async (ctx) => {
+    return await authComponent.safeGetAuthUser(ctx);
+  },
+});
+
+export function identityName(identity: AuthIdentity): string {
   const name = getOptionalString(identity, "name");
   if (name) return name;
 
@@ -28,11 +72,11 @@ export function identityName(identity: ClerkIdentity): string {
   return "Unknown";
 }
 
-export function identityEmail(identity: ClerkIdentity): string {
+export function identityEmail(identity: AuthIdentity): string {
   return getOptionalString(identity, "email") ?? "";
 }
 
-export function identityAvatarUrl(identity: ClerkIdentity): string | undefined {
+export function identityAvatarUrl(identity: AuthIdentity): string | undefined {
   return getOptionalString(identity, "pictureUrl");
 }
 

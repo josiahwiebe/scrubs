@@ -35,6 +35,7 @@ interface CommentItemProps {
   isHighlighted?: boolean;
   isReply?: boolean;
   canResolve?: boolean;
+  onStartTyping?: () => void;
 }
 
 export function CommentItem({
@@ -43,6 +44,7 @@ export function CommentItem({
   isHighlighted = false,
   isReply = false,
   canResolve = false,
+  onStartTyping,
 }: CommentItemProps) {
   const [isReplying, setIsReplying] = useState(false);
   const toggleResolved = useMutation(api.comments.toggleResolved);
@@ -147,6 +149,7 @@ export function CommentItem({
             parentId={comment._id}
             onSubmit={() => setIsReplying(false)}
             onCancel={() => setIsReplying(false)}
+            onStartTyping={onStartTyping}
             autoFocus
             placeholder="Write a reply..."
           />

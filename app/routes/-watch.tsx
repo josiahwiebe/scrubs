@@ -1,9 +1,8 @@
 import { useAction, useMutation } from "convex/react";
 import { api } from "@convex/_generated/api";
 import { Link, useParams } from "@tanstack/react-router";
-import { useUser } from "@clerk/tanstack-react-start";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { VideoPlayer, type VideoPlayerHandle } from "@/components/video-player/VideoPlayer";
+import { VideoPlayer, type TimelineComment, type VideoPlayerHandle } from "@/components/video-player/VideoPlayer";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
@@ -11,11 +10,14 @@ import { triggerDownload } from "@/lib/download";
 import { formatDuration, formatTimestamp, formatRelativeTime } from "@/lib/utils";
 import { AlertCircle, MessageSquare, Clock, Download, X } from "lucide-react";
 import { useWatchData } from "./-watch.data";
+import { authClient } from "@/lib/auth-client";
 
 export default function WatchPage() {
   const params = useParams({ strict: false });
   const publicId = params.publicId as string;
-  const { user, isLoaded: isUserLoaded } = useUser();
+  const { data: session, isPending: isUserPending } = authClient.useSession();
+  const user = session?.user ?? null;
+  const isUserLoaded = !isUserPending;
 
   const createComment = useMutation(api.comments.createForPublic);
   const getPlaybackSession = useAction(api.videoActions.getPublicPlaybackSession);
@@ -72,25 +74,37 @@ export default function WatchPage() {
   }, [publicId]);
 
   const flattenedComments = useMemo(() => {
-    if (!comments) return [] as Array<{ _id: string; timestampSeconds: number; resolved: boolean }>;
+    if (!comments) return [] as TimelineComment[];
 
-    const markers: Array<{ _id: string; timestampSeconds: number; resolved: boolean }> = [];
+    const markers: TimelineComment[] = [];
     for (const comment of comments) {
       markers.push({
         _id: comment._id,
         timestampSeconds: comment.timestampSeconds,
         resolved: comment.resolved,
+        text: comment.text,
+        userName: comment.userName,
+        userAvatarUrl: comment.userAvatarUrl,
+        _creationTime: comment._creationTime,
       });
       for (const reply of comment.replies) {
         markers.push({
           _id: reply._id,
           timestampSeconds: reply.timestampSeconds,
           resolved: reply.resolved,
+          text: reply.text,
+          userName: reply.userName,
+          userAvatarUrl: reply.userAvatarUrl,
+          _creationTime: reply._creationTime,
         });
       }
     }
     return markers;
   }, [comments]);
+
+  const pausePlaybackForComment = useCallback(() => {
+    playerRef.current?.pause();
+  }, []);
 
   const handleSubmitComment = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -155,7 +169,7 @@ export default function WatchPage() {
           </CardHeader>
           <CardContent>
             <Link to="/" preload="intent" className="block">
-              <Button variant="outline" className="w-full">Go to scrubs</Button>
+              <Button variant="outline" className="w-full">Go to scrubs.</Button>
             </Link>
           </CardContent>
         </Card>
@@ -175,7 +189,7 @@ export default function WatchPage() {
             to="/"
             className="text-[#888] hover:text-[#1a1a1a] text-sm flex items-center gap-2 font-bold"
           >
-            scrubs
+            scrubs.
           </Link>
           <div className="h-4 w-[2px] bg-[#1a1a1a]/20" />
           <h1 className="text-base font-black truncate max-w-[150px] sm:max-w-[300px]">{video.title}</h1>
@@ -318,7 +332,11 @@ export default function WatchPage() {
                 </div>
                 <Textarea
                   value={commentText}
-                  onChange={(event) => setCommentText(event.target.value)}
+                  onChange={(event) => {
+                    pausePlaybackForComment();
+                    setCommentText(event.target.value);
+                  }}
+                  onFocus={pausePlaybackForComment}
                   placeholder="Leave a comment..."
                   className="min-h-[90px] text-sm"
                 />
@@ -427,7 +445,11 @@ export default function WatchPage() {
                 </div>
                 <Textarea
                   value={commentText}
-                  onChange={(event) => setCommentText(event.target.value)}
+                  onChange={(event) => {
+                    pausePlaybackForComment();
+                    setCommentText(event.target.value);
+                  }}
+                  onFocus={pausePlaybackForComment}
                   placeholder="Leave a comment..."
                   className="min-h-[90px] text-sm"
                 />

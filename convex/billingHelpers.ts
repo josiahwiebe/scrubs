@@ -5,6 +5,7 @@ import { MutationCtx, QueryCtx } from "./_generated/server";
 export type TeamPlan = "basic" | "pro";
 
 const GIBIBYTE = 1024 ** 3;
+const UNLIMITED_STORAGE_LIMIT_BYTES = Number.MAX_SAFE_INTEGER;
 
 export const TEAM_PLAN_MONTHLY_PRICE_USD: Record<TeamPlan, number> = {
   basic: 5,
@@ -18,6 +19,50 @@ export const TEAM_PLAN_STORAGE_LIMIT_BYTES: Record<TeamPlan, number> = {
 
 function hasText(value: string | undefined | null): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function readCsvEnv(name: string) {
+  return new Set(
+    (process.env[name] ?? "")
+      .split(",")
+      .map((value) => value.trim().toLowerCase())
+      .filter(Boolean),
+  );
+}
+
+export function getPersonalTeamOwnerEmails() {
+  return readCsvEnv("PERSONAL_TEAM_OWNER_EMAILS");
+}
+
+export function getPersonalTeamSlugs() {
+  return readCsvEnv("PERSONAL_TEAM_SLUGS");
+}
+
+export async function isPersonalUnlimitedTeam(
+  ctx: BillingCtx,
+  teamId: Id<"teams">,
+) {
+  const team = await ctx.db.get(teamId);
+  if (!team) {
+    throw new Error("Team not found");
+  }
+
+  if (getPersonalTeamSlugs().has(team.slug.toLowerCase())) {
+    return { team, isPersonal: true };
+  }
+
+  const owner = await ctx.db
+    .query("teamMembers")
+    .withIndex("by_team_and_user", (q) =>
+      q.eq("teamId", teamId).eq("userClerkId", team.ownerClerkId),
+    )
+    .unique();
+
+  const ownerEmail = owner?.userEmail.toLowerCase();
+  return {
+    team,
+    isPersonal: Boolean(ownerEmail && getPersonalTeamOwnerEmails().has(ownerEmail)),
+  };
 }
 
 export function normalizeStoredTeamPlan(plan: string): TeamPlan {
@@ -69,11 +114,18 @@ export async function getTeamSubscriptionState(
   ctx: BillingCtx,
   teamId: Id<"teams">,
 ) {
-  const team = await ctx.db.get(teamId);
-  if (!team) {
-    throw new Error("Team not found");
+  const personalTeam = await isPersonalUnlimitedTeam(ctx, teamId);
+  if (personalTeam.isPersonal) {
+    return {
+      team: personalTeam.team,
+      subscription: null,
+      plan: "pro" as const,
+      hasActiveSubscription: true,
+      isPersonalUnlimited: true,
+    };
   }
 
+  const team = personalTeam.team;
   const subscription = await getTeamSubscriptionByOrgId(ctx, teamId);
   const subscriptionPlan = resolvePlanFromStripePriceId(subscription?.priceId);
   const plan = subscriptionPlan ?? normalizeStoredTeamPlan(team.plan);
@@ -81,7 +133,7 @@ export async function getTeamSubscriptionState(
     subscription?.status,
   );
 
-  return { team, subscription, plan, hasActiveSubscription };
+  return { team, subscription, plan, hasActiveSubscription, isPersonalUnlimited: false };
 }
 
 export async function getTeamStorageUsedBytes(
@@ -133,7 +185,9 @@ export async function assertTeamCanStoreBytes(
 ) {
   const state = await assertTeamHasActiveSubscription(ctx, teamId);
   const storageUsedBytes = await getTeamStorageUsedBytes(ctx, teamId);
-  const storageLimitBytes = TEAM_PLAN_STORAGE_LIMIT_BYTES[state.plan];
+  const storageLimitBytes = state.isPersonalUnlimited
+    ? UNLIMITED_STORAGE_LIMIT_BYTES
+    : TEAM_PLAN_STORAGE_LIMIT_BYTES[state.plan];
   const requestedBytes = Number.isFinite(incomingBytes) ? Math.max(0, incomingBytes) : 0;
 
   if (storageUsedBytes + requestedBytes > storageLimitBytes) {
