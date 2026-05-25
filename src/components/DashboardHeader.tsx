@@ -16,27 +16,6 @@ import {
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { authClient } from "@/lib/auth-client";
 
-function ThemeToggleButton() {
-  const { theme, toggleTheme, mounted } = useTheme();
-
-  if (!mounted) return <div className="w-8 h-8" />;
-
-  return (
-    <button
-      onClick={toggleTheme}
-      className="w-8 h-8 flex items-center justify-center text-[#888] hover:text-[#1a1a1a] hover:bg-[#e8e8e0] transition-colors"
-      title={`Switch to ${theme === "dark" ? "light" : "dark"} mode (⌘⇧L)`}
-      aria-label={`Switch to ${theme === "dark" ? "light" : "dark"} mode`}
-    >
-      {theme === "dark" ? (
-        <Sun className="h-4 w-4" />
-      ) : (
-        <Moon className="h-4 w-4" />
-      )}
-    </button>
-  );
-}
-
 function getUserInitials(name: string | null | undefined, email: string | null | undefined) {
   const source = name || email || "User";
   return source
@@ -50,6 +29,7 @@ function getUserInitials(name: string | null | undefined, email: string | null |
 /** Renders the Better Auth account menu used in the dashboard header. */
 function UserMenuButton() {
   const { data: session, isPending } = authClient.useSession();
+  const { theme, toggleTheme, mounted } = useTheme();
   const user = session?.user;
 
   if (isPending) {
@@ -61,6 +41,10 @@ function UserMenuButton() {
   }
 
   const label = user.name || user.email || "Account";
+  const themeLabel = mounted
+    ? `Switch to ${theme === "dark" ? "light" : "dark"} mode`
+    : "Theme";
+  const ThemeIcon = theme === "dark" ? Sun : Moon;
 
   const handleSignOut = async () => {
     await authClient.signOut({
@@ -80,9 +64,9 @@ function UserMenuButton() {
           className="h-8 w-8 border-2 border-[#1a1a1a] bg-[#e8e8e0] text-[#1a1a1a] outline-none focus-visible:ring-2 focus-visible:ring-[#2d5a2d]"
           aria-label="Open account menu"
         >
-          <Avatar className="h-full w-full rounded-none ring-0">
+          <Avatar className="h-full w-full rounded-md ring-0">
             {user.image ? <AvatarImage src={user.image} alt={label} /> : null}
-            <AvatarFallback className="rounded-none text-xs">
+            <AvatarFallback className="rounded-md text-xs">
               {getUserInitials(user.name, user.email)}
             </AvatarFallback>
           </Avatar>
@@ -98,6 +82,10 @@ function UserMenuButton() {
           ) : null}
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <DropdownMenuItem disabled={!mounted} onSelect={toggleTheme}>
+          <ThemeIcon className="mr-2 h-4 w-4" />
+          {themeLabel}
+        </DropdownMenuItem>
         <DropdownMenuItem disabled>
           <User className="mr-2 h-4 w-4" />
           Account
@@ -166,8 +154,7 @@ export function DashboardHeader({
       </div>
 
       {/* User controls — pinned top-right */}
-      <div className="row-start-1 col-start-2 sm:col-start-3 flex items-center gap-4 pl-4 border-l-2 border-[#1a1a1a]/10 h-8">
-        <ThemeToggleButton />
+      <div className="row-start-1 col-start-2 sm:col-start-3 flex items-center pl-4 border-l-2 border-[#1a1a1a]/10 h-8">
         <UserMenuButton />
       </div>
 

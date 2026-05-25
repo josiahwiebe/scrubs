@@ -16,7 +16,6 @@ import {
 } from "@/components/videos/VideoWorkflowStatusControl";
 import { formatDuration } from "@/lib/utils";
 import { useVideoPresence } from "@/lib/useVideoPresence";
-import { VideoWatchers } from "@/components/presence/VideoWatchers";
 import { DashboardHeader } from "@/components/DashboardHeader";
 import {
   Edit2,
@@ -105,7 +104,7 @@ export default function VideoPage() {
       projectId: resolvedProjectId,
     });
   });
-  const { watchers } = useVideoPresence({
+  useVideoPresence({
     videoId: resolvedVideoId,
     enabled: Boolean(resolvedVideoId),
   });
@@ -321,14 +320,9 @@ export default function VideoPage() {
       ]}>
         {/* Desktop: inline actions */}
         <div className="hidden sm:flex items-center gap-3 text-xs text-[#888]">
-          <span className="truncate max-w-[100px]">{video.uploaderName}</span>
           {video.duration && (
-            <>
-              <span className="text-[#ccc]">·</span>
-              <span className="font-mono">{formatDuration(video.duration)}</span>
-            </>
+            <span className="font-mono">{formatDuration(video.duration)}</span>
           )}
-          <VideoWatchers watchers={watchers} />
         </div>
         <div className="hidden sm:flex items-center gap-3 flex-shrink-0 border-l-2 border-[#1a1a1a]/20 pl-3 ml-1">
           <VideoWorkflowStatusControl

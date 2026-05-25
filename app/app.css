@@ -78,12 +78,19 @@
   --border: #1a1a1a;
   --border-subtle: #cccccc;
   --shadow-color: #1a1a1a;
-  --shadow-accent: rgba(45,90,45,1);
+  --shadow-accent: rgba(12,57,83,1);
 
-  /* Accent - forest green */
-  --accent: #2d5a2d;
-  --accent-hover: #3a6a3a;
-  --accent-light: #7cb87c;
+  /* Shape */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
+
+  /* Accent - primary blue */
+  --accent: #0c3953;
+  --accent-hover: #14516e;
+  --accent-light: #8bb6c8;
+  --accent-text: var(--accent);
 
   /* Semantic colors */
   --destructive: #dc2626;
@@ -116,13 +123,14 @@
   /* Borders */
   --border: #e7ede4;
   --border-subtle: #374038;
-  --shadow-color: #7cb87c;
-  --shadow-accent: #7cb87c;
+  --shadow-color: #8bb6c8;
+  --shadow-accent: #8bb6c8;
 
-  /* Accent - forest green lifted for dark backgrounds */
-  --accent: #7cb87c;
-  --accent-hover: #91c991;
-  --accent-light: #b8ddb8;
+  /* Accent - primary blue with a readable lifted text tone */
+  --accent: #0c3953;
+  --accent-hover: #14516e;
+  --accent-light: #8bb6c8;
+  --accent-text: var(--accent-light);
 
   /* Semantic colors */
   --destructive: #f87171;
@@ -154,13 +162,14 @@
     /* Borders */
     --border: #e7ede4;
     --border-subtle: #374038;
-    --shadow-color: #7cb87c;
-    --shadow-accent: #7cb87c;
+    --shadow-color: #8bb6c8;
+    --shadow-accent: #8bb6c8;
 
-    /* Accent - forest green lifted for dark backgrounds */
-    --accent: #7cb87c;
-    --accent-hover: #91c991;
-    --accent-light: #b8ddb8;
+    /* Accent - primary blue with a readable lifted text tone */
+    --accent: #0c3953;
+    --accent-hover: #14516e;
+    --accent-light: #8bb6c8;
+    --accent-text: var(--accent-light);
 
     /* Semantic colors */
     --destructive: #f87171;
@@ -180,6 +189,10 @@
   --font-sans: 'Geist', system-ui, -apple-system, sans-serif;
   --font-mono: 'Geist Mono', ui-monospace, monospace;
   --font-serif: 'Instrument Serif', Georgia, serif;
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 }
 
 * {
@@ -216,6 +229,7 @@ body {
 
 ::-webkit-scrollbar-thumb {
   background: var(--border-subtle);
+  border-radius: var(--radius-sm);
 }
 
 ::-webkit-scrollbar-thumb:hover {
@@ -231,7 +245,7 @@ body {
 .video-js .vjs-big-play-button {
   background-color: rgba(0, 0, 0, 0.7);
   border: 2px solid rgba(255, 255, 255, 0.3);
-  border-radius: 0;
+  border-radius: var(--radius-lg);
   width: 72px;
   height: 72px;
   line-height: 72px;
@@ -265,6 +279,7 @@ body {
   height: 4px;
   margin: 0;
   background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
 }
 
 .video-js .vjs-play-progress {
@@ -362,6 +377,93 @@ body {
   font-family: 'Geist Mono', ui-monospace, monospace;
 }
 
+/* Soften legacy hard-edged utility compositions without rewriting every route. */
+[class~="border-2"][class*="shadow-"],
+[class~="border-2"][class~="bg-[#f0f0e8]"],
+[class~="border-2"][class~="bg-[#e8e8e0]"],
+[class~="border-2"][class~="bg-[#1a1a1a]"],
+[class~="border-2"][class~="bg-[#2d5a2d]"] {
+  border-radius: var(--radius-lg);
+}
+
+[class~="border-2"][class~="px-2"],
+[class~="border-2"][class~="px-3"],
+[class~="border-2"][class~="px-4"],
+[class~="border-2"][class~="px-5"],
+[class~="border-2"][class~="px-6"],
+[class~="border-2"][class~="px-8"],
+[class~="border-2"][class~="px-10"],
+[class~="border-2"][class~="px-12"],
+[class~="border-2"][class~="py-1"],
+[class~="border-2"][class~="py-2"],
+[class~="border-2"][class~="py-3"],
+[class~="border-2"][class~="py-4"],
+[class~="border-2"][class~="py-5"],
+[class~="border-2"][class~="py-6"] {
+  border-radius: var(--radius-md);
+}
+
+/* Remove legacy offset block shadows; borders carry the UI shape now. */
+[class*="shadow-["][class*="_0px_0px_"],
+[class*="shadow-["][class*="_0_0_"] {
+  box-shadow: none !important;
+}
+
+[class~="shadow-[2px_2px_0px_0px_var(--shadow-color)]"],
+[class~="shadow-[2px_2px_0_var(--shadow-color)]"] {
+  box-shadow: none !important;
+}
+
+[class~="shadow-[4px_4px_0px_0px_var(--shadow-color)]"],
+[class~="shadow-[4px_4px_0_var(--shadow-color)]"],
+[class~="shadow-[4px_4px_0px_0px_#1a1a1a]"] {
+  box-shadow: none !important;
+}
+
+[class~="shadow-[6px_6px_0px_0px_var(--shadow-color)]"],
+[class~="shadow-[8px_8px_0px_0px_var(--shadow-color)]"],
+[class~="shadow-[12px_12px_0px_0px_var(--shadow-color)]"],
+[class~="shadow-[8px_8px_0px_0px_#1a1a1a]"],
+[class~="shadow-[12px_12px_0_0_#1a1a1a]"],
+[class~="shadow-[8px_8px_0px_0px_rgba(0,0,0,0.3)]"] {
+  box-shadow: none !important;
+}
+
+[class~="shadow-[8px_8px_0px_0px_var(--shadow-accent)]"],
+[class~="shadow-[12px_12px_0px_0px_var(--shadow-accent)]"] {
+  box-shadow: none !important;
+}
+
+[class~="hover:shadow-[2px_2px_0px_0px_var(--shadow-color)]"]:hover,
+[class~="hover:shadow-[4px_4px_0px_0px_var(--shadow-color)]"]:hover,
+[class~="hover:shadow-[4px_4px_0px_0px_#1a1a1a]"]:hover {
+  box-shadow: none !important;
+}
+
+[class~="hover:shadow-[6px_6px_0px_0px_var(--shadow-color)]"]:hover,
+[class~="hover:shadow-[8px_8px_0px_0px_var(--shadow-color)]"]:hover,
+[class~="hover:shadow-[4px_4px_0px_0px_rgba(0,0,0,0.3)]"]:hover {
+  box-shadow: none !important;
+}
+
+[class~="hover:shadow-[4px_4px_0px_0px_var(--shadow-accent)]"]:hover,
+[class~="hover:shadow-[8px_8px_0px_0px_var(--shadow-accent)]"]:hover {
+  box-shadow: none !important;
+}
+
+[class~="focus-visible:shadow-[4px_4px_0px_0px_var(--shadow-accent)]"]:focus-visible,
+[class~="focus:shadow-[2px_2px_0px_0px_var(--shadow-color)]"]:focus {
+  box-shadow: none !important;
+}
+
+[class~="shadow-[0_10px_40px_rgba(0,0,0,0.45)]"] {
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.28) !important;
+}
+
+[class~="shadow-[0_16px_40px_rgba(0,0,0,0.42)]"] {
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.26) !important;
+}
+
 /* Map legacy hardcoded utility tokens to theme vars so dark mode works app-wide */
 [class~="bg-[#f0f0e8]"] { background-color: var(--background) !important; }
 [class~="text-[#f0f0e8]"] { color: var(--foreground-inverse) !important; }
@@ -389,7 +491,14 @@ body {
 [class~="border-[#cccccc]"] { border-color: var(--border-subtle) !important; }
 
 [class~="bg-[#2d5a2d]"] { background-color: var(--accent) !important; }
-[class~="text-[#2d5a2d]"] { color: var(--accent) !important; }
+[class~="bg-[#2d5a2d]/5"] {
+  background-color: color-mix(in srgb, var(--accent) 5%, transparent) !important;
+}
+[class~="bg-[#2d5a2d]/10"] {
+  background-color: color-mix(in srgb, var(--accent) 10%, transparent) !important;
+}
+[class~="text-[#2d5a2d]"] { color: var(--accent-text) !important; }
+[class~="fill-[#2d5a2d]"] { fill: var(--accent-text) !important; }
 [class~="border-[#2d5a2d]"] { border-color: var(--accent) !important; }
 
 [class~="bg-[#3a6a3a]"] { background-color: var(--accent-hover) !important; }
@@ -414,17 +523,25 @@ body {
 [class~="hover:bg-[#1a1a1a]"]:hover { background-color: var(--foreground) !important; }
 [class~="hover:bg-[#e8e8e0]"]:hover { background-color: var(--surface-alt) !important; }
 [class~="hover:bg-[#d8d8d0]"]:hover { background-color: var(--surface-muted) !important; }
+[class~="hover:bg-[#2d5a2d]"]:hover { background-color: var(--accent) !important; }
 [class~="hover:bg-[#3a6a3a]"]:hover { background-color: var(--accent-hover) !important; }
+[class~="hover:border-[#2d5a2d]"]:hover { border-color: var(--accent) !important; }
 [class~="hover:bg-[#dc2626]/10"]:hover {
   background-color: color-mix(in srgb, var(--destructive) 10%, transparent) !important;
 }
 
 [class~="hover:text-[#1a1a1a]"]:hover { color: var(--foreground) !important; }
 [class~="hover:text-[#f0f0e8]"]:hover { color: var(--foreground-inverse) !important; }
-[class~="hover:text-[#2d5a2d]"]:hover { color: var(--accent) !important; }
+[class~="hover:text-[#2d5a2d]"]:hover { color: var(--accent-text) !important; }
+[class~="hover:text-[#3a6a3a]"]:hover { color: var(--accent-hover) !important; }
+[class~="focus-visible:border-[#2d5a2d]"]:focus-visible { border-color: var(--accent) !important; }
+[class~="focus-visible:ring-[#2d5a2d]"]:focus-visible { --tw-ring-color: var(--accent) !important; }
 [class~="group-hover:text-[#1a1a1a]"] {
   transition: color 150ms ease;
 }
 .group:hover [class~="group-hover:text-[#1a1a1a]"] {
   color: var(--foreground) !important;
+}
+.group:hover [class~="group-hover:text-[#7cb87c]"] {
+  color: var(--accent-light) !important;
 }

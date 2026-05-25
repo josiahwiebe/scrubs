@@ -3,7 +3,7 @@ import { Link } from "@tanstack/react-router";
 export function NotFound() {
   return (
     <div className="min-h-screen bg-[#f0f0e8] text-[#1a1a1a] flex flex-col items-center justify-center p-6 relative overflow-hidden font-sans">
-      <div className="max-w-4xl w-full border-2 border-[#1a1a1a] bg-white relative z-10 p-8 md:p-16 flex flex-col items-start shadow-[12px_12px_0_0_#1a1a1a]">
+      <div className="max-w-4xl w-full border-2 border-[#1a1a1a] bg-white relative z-10 p-8 md:p-16 flex flex-col items-start">
         <div className="font-mono text-sm md:text-base text-[#888888] mb-4 uppercase tracking-widest border-b-2 border-[#1a1a1a] pb-2 w-full">
           Status Code // 404
         </div>

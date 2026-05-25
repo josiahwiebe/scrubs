@@ -79,9 +79,9 @@ export function CommentItem({
       )}
     >
       <div className="flex items-start gap-3">
-        <Avatar className="h-9 w-9 shadow-sm">
+        <Avatar className="h-9 w-9 rounded-md border-2 border-[#1a1a1a] ring-0">
           <AvatarImage src={comment.userAvatarUrl} />
-          <AvatarFallback className="text-[10px]">
+          <AvatarFallback className="rounded-sm text-[10px]">
             {getInitials(comment.userName)}
           </AvatarFallback>
         </Avatar>

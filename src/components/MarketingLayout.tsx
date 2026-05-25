@@ -15,11 +15,12 @@ const lightModeVars = {
   "--foreground-inverse": "#f0f0e8",
   "--border": "#1a1a1a",
   "--border-subtle": "#cccccc",
-  "--accent": "#2d5a2d",
-  "--accent-hover": "#3a6a3a",
-  "--accent-light": "#7cb87c",
+  "--accent": "#0c3953",
+  "--accent-hover": "#14516e",
+  "--accent-light": "#8bb6c8",
+  "--accent-text": "#0c3953",
   "--shadow-color": "#1a1a1a",
-  "--shadow-accent": "rgba(45,90,45,1)",
+  "--shadow-accent": "rgba(12,57,83,1)",
 } as React.CSSProperties;
 
 export function MarketingLayout({ children }: { children: ReactNode }) {

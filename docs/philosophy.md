@@ -9,9 +9,9 @@ Brutalist, typographic, minimal. The design should feel bold and direct—like a
 - **Background**: `#f0f0e8` (warm cream)
 - **Text**: `#1a1a1a` (near-black)
 - **Muted text**: `#888888`
-- **Primary accent**: `#2d5a2d` (deep forest green)
-- **Accent hover**: `#3a6a3a`
-- **Highlight**: `#7cb87c` (soft green for emphasis)
+- **Primary accent**: `#0c3953` (deep blue)
+- **Accent hover**: `#14516e`
+- **Highlight**: `#8bb6c8` (soft blue for emphasis)
 - **Borders**: `#1a1a1a` (strong) or `#ccc` (subtle)
 - **Inverted sections**: `#1a1a1a` background with `#f0f0e8` text
 
@@ -34,5 +34,6 @@ Brutalist, typographic, minimal. The design should feel bold and direct—like a
 ### Component Patterns
 - **Cards**: 2px black border, cream background, bold title
 - **Sections**: Often alternate between cream and dark backgrounds
-- **Forms**: Simple inputs with strong borders, no rounded corners or minimal
+- **Forms**: Simple inputs with strong borders and modest radius
 - **Navigation**: Minimal, text-based, appears on scroll when needed
+- **Shadows**: Compact offsets only; avoid oversized poster-drop shadows

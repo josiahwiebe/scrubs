@@ -355,7 +355,7 @@ export default function ProjectPage({
                       })
                     }
                   >
-                    <div className="relative aspect-video bg-[#e8e8e0] overflow-hidden border-2 border-[#1a1a1a] shadow-[4px_4px_0px_0px_var(--shadow-color)] group-hover:translate-y-[2px] group-hover:translate-x-[2px] group-hover:shadow-[2px_2px_0px_0px_var(--shadow-color)] transition-all">
+                    <div className="relative aspect-video bg-[#e8e8e0] overflow-hidden border-2 border-[#1a1a1a] transition-colors">
                       {thumbnailSrc ? (
                         <img
                           src={thumbnailSrc}
@@ -499,7 +499,7 @@ export default function ProjectPage({
                   }
                 >
                   {/* Thumbnail */}
-                  <div className="relative w-44 aspect-video bg-[#e8e8e0] overflow-hidden border-2 border-[#1a1a1a] shrink-0 shadow-[4px_4px_0px_0px_var(--shadow-color)] group-hover:translate-y-[2px] group-hover:translate-x-[2px] group-hover:shadow-[2px_2px_0px_0px_var(--shadow-color)] transition-all">
+                  <div className="relative w-44 aspect-video bg-[#e8e8e0] overflow-hidden border-2 border-[#1a1a1a] shrink-0 transition-colors">
                     {thumbnailSrc ? (
                       <img
                         src={thumbnailSrc}
@@ -625,7 +625,7 @@ export default function ProjectPage({
         <div className="fixed right-4 top-4 z-50" aria-live="polite">
           <div
             className={cn(
-              "border-2 px-3 py-2 text-sm font-bold shadow-[4px_4px_0px_0px_var(--shadow-color)]",
+              "border-2 px-3 py-2 text-sm font-bold",
               shareToast.tone === "success"
                 ? "border-[#1a1a1a] bg-[#f0f0e8] text-[#1a1a1a]"
                 : "border-[#dc2626] bg-[#fef2f2] text-[#dc2626]",
